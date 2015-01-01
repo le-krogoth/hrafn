@@ -1,7 +1,7 @@
 hrafn
 =====
 
-**hrafn** (c) 2014 by [Krogoth](https://twitter.com/le_krogoth) of [Ministry of Zombie Defense](http://www.mzd.org.uk/)
+**hrafn** (c) 2014-15 by [Krogoth](https://twitter.com/le_krogoth) of [Ministry of Zombie Defense](http://www.mzd.org.uk/)
 
 ## Introduction ##
 
