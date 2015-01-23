@@ -29,6 +29,9 @@ var config =
     // separator used in fields where there are multiple items, like the policy violation fields
     csv_separator: ":",
 
+    // number of parallel jobs
+    job_limit: 1,
+
     // path (and name) of used tools
     sslyze: "../sslyze/sslyze.py",
     nmap: "nmap",

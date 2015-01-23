@@ -31,6 +31,7 @@ var program = require('commander');
 var chalk = require('chalk');
 var spawn = require('child_process').spawn;
 var fs = require('fs-extra');
+var async = require('async');
 
 console.log(chalk.red("Init..."));
 
@@ -46,10 +47,10 @@ program
 
 runScan();
 
-function scanDomain(domain, fdate)
+function scanDomain(domain, fdate, callback)
 {
     runSslyze(domain, fdate);
-    runNmap(domain, fdate);
+    runNmap(domain, fdate, callback);
 }
 
 function runSslyze(domain, fdate)
@@ -79,7 +80,7 @@ function runSslyze(domain, fdate)
     });
 }
 
-function runNmap(domain, fdate)
+function runNmap(domain, fdate, callback)
 {
     console.log(chalk.green("Executing nmap on domain %s"), domain);
 
@@ -103,6 +104,8 @@ function runNmap(domain, fdate)
                 if (err) return console.error(err)
             });
         }
+
+        callback();
     });
 }
 
@@ -124,14 +127,23 @@ function runScan()
 
     var outPath = program.out + "/" + fdate;
     fs.ensureDirSync(outPath, function(err) {
-        console.log(err) // => null
+        console.log(err); // => null
         //dir has now been created, including the directory it is to be placed in
     })
 
-    var lenDomains = domains.length;
-    for (var countDomain = 0; countDomain < lenDomains; countDomain++)
-    {
-        var domain = domains[countDomain];
-        scanDomain(domain, fdate);
-    }
+    //var lenDomains = domains.length;
+    //for (var countDomain = 0; countDomain < lenDomains; countDomain++)
+    //{
+    //    var domain = domains[countDomain];
+    //    scanDomain(domain, fdate);
+    //}
+
+    async.forEachLimit(domains, config.job_limit, function(domain, callback) {
+        scanDomain(domain, fdate, callback);
+    }, function(err) {
+        if (err) {
+            console.log("Error in foreachlimit: %s", err);
+        }
+    });
+
 }
