@@ -29,18 +29,21 @@ The installation is quite straightforward:
 git clone https://github.com/le-krogoth/hrafn.git
 ```
 
-## Configuration ##
-
 * Run the following command in the root directory to install all dependencies.
 
 ```
 npm install
 ```
 
-* Change your settings in the config.js file to your liking.
+## Configuration ##
+
+* Change the settings in the config.js file to your liking.
 * Add your domains to the domains.js file. Please make sure that you are allowed to scan these domains.
-* Configure ciphers.js to your liking. This file contains all the ciphers which your policy allows. See report for details.
-* Regularly run the scan process like so:
+* Configure ciphers.js to your liking. This file contains all the ciphers which your policy allows. See report section for details.
+
+## Run ##
+
+* Run the scan process like this. If no parameter is given, the scan script takes the configuration from the config file.
 
 ```
 ./scan.js
@@ -52,10 +55,8 @@ npm install
 // run scan.js with the help flag to learn more about the commandline
 
 ./scan.js --help
-
-// if no parameter is given, the scan scripts takes the configuration from the config file
 ```
-* Regularly run the report job to generate a CSV
+* Run the report job to generate a CSV file.
 
 ```
 ./report.js
@@ -63,6 +64,15 @@ npm install
 // run again with the help flag for details regarding the commandline. Again, when no
 // parameter is given, the script takes the configuration from the config file.
 ```
+
+If you want to run the scan as well as generate the report regularly, you could add these lines to your crontab file
+as root. *Just don't forget to change the hrafnuser and your path accordingly*.
+
+```
+07 8    * * *   hrafnuser   cd /path/to/hrafn && scan.js
+53 8    * * *   hrafnuser   cd /path/to/hrafn && report.js
+```
+
 
 ## Report ##
 
