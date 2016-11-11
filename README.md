@@ -1,7 +1,7 @@
 hrafn
 =====
 
-**hrafn** (c) 2014-15 by [Krogoth](https://twitter.com/le_krogoth) of [Ministry of Zombie Defense](http://www.mzd.org.uk/)
+**hrafn** (c) 2014-16 by [Krogoth](https://twitter.com/le_krogoth) of [Ministry of Zombie Defense](http://www.mzd.org.uk/)
 
 ## Introduction ##
 
@@ -73,6 +73,9 @@ as root. *Just don't forget to change the hrafnuser and your path accordingly*.
 53 8    * * *   hrafnuser   cd /path/to/hrafn && report.js
 ```
 
+## Updates ##
+
+11.11.2016: Fixed the fingerprint query, supporting the new sslyze xml format. Adding certchain field to the report, filling with details about the certchain, see below.
 
 ## Report ##
 
@@ -81,6 +84,7 @@ The generated report is in CSV format (to be imported in some tool like, say, Sp
 * **host**: Scanned host
 * **ip**: IP address of scanned host
 * **fingerprint**: Fingerprint of certificate found on host
+* **certchain**: Details about the certificate chain, including position, issuer, subject, serial number, validity and signature algorithm. Fields are separated by :, lines by ;
 * **sslv2**: Amount of supported ciphers with this protocol version
 * **sslv3**: Amount of supported ciphers with this protocol version
 * **tlsv1_0**: Amount of supported ciphers with this protocol version
@@ -89,4 +93,3 @@ The generated report is in CSV format (to be imported in some tool like, say, Sp
 * **policy_violation_tlsv1_0**: This field contains all ciphers which are not in your ciphers.js but were supported on this protocol on the server.
 * **policy_violation_tlsv1_1**: This field contains all ciphers which are not in your ciphers.js but were supported on this protocol on the server.
 * **policy_violation_tlsv1_2**: This field contains all ciphers which are not in your ciphers.js but were supported on this protocol on the server.
-
