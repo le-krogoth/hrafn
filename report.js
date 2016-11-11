@@ -125,7 +125,7 @@ function generateReport()
                 //
                 var host = xpath.select1("//document/results/target/@host", doc).value;
                 var ip = xpath.select1("//document/results/target/@ip", doc).value;
-                var fingerprint = xpath.select1("//document/results/target/certinfo/certificateChain/certificate[@position='leaf']/@sha1Fingerprint", doc).value;
+                var fingerprint = xpath.select1("//document/results/target/certinfo_basic/receivedCertificateChain/certificate[@position='leaf']/@sha1Fingerprint", doc).value;
 
                 var sslv2 = xpath.select1("count(//document/results/target/sslv2/acceptedCipherSuites/cipherSuite)", doc);
                 var sslv3 = xpath.select1("count(//document/results/target/sslv3/acceptedCipherSuites/cipherSuite)", doc);
@@ -139,10 +139,34 @@ function generateReport()
                 var ciphtlsv12 = xpath.select("//document/results/target/tlsv1_2/acceptedCipherSuites/cipherSuite/@name", doc);
                 var tlsv12 = ciphtlsv12.length;
 
+                var arrCertChain = xpath.select("//document/results/target/certinfo_basic/receivedCertificateChain/certificate", doc);
+                var iCCLength = arrCertChain.length;
+
+                var strCC = "";
+
+                for(var icc = 0; icc < iCCLength; icc++)
+                {
+                    var cert = arrCertChain[icc];
+                    strCC += xpath.select1("@position", cert).value + ":";
+                    strCC += xpath.select1("issuer/commonName/text()", cert) + ":";
+                    strCC += xpath.select1("subject/commonName/text()", cert) + ":";
+                    strCC += xpath.select1("serialNumber/text()", cert) + ":";
+                    strCC += xpath.select1("validity/notAfter/text()", cert) + ":";
+                    strCC += xpath.select1("signatureAlgorithm/text()", cert);
+
+                    if(icc < iCCLength -1)
+                    {
+                        strCC += ";\n";
+                    }
+                }
+
+                strCC = "\"" + strCC + "\"";
+
                 lines.push({
                     host: host,
                     ip: ip,
                     fingerprint: fingerprint,
+                    certchain: strCC,
                     sslv2: sslv2,
                     sslv3: sslv3,
                     tlsv1_0: tlsv10,
@@ -155,7 +179,7 @@ function generateReport()
 
                 //console.log("File '" + file + "/ was successfully read.");
             } catch (ex) {
-                console.log("Unable to read file '%'.", file);
+                console.log("Unable to read file '%s'.", file);
                 //console.log(ex);
             }
         }
