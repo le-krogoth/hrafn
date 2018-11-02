@@ -23,7 +23,7 @@ And just in case you wonder, **hrafn** means raven in Old Norse (https://en.wiki
 
 ## Installation ##
 
-Get hrafn from our [release page](https://github.com/le-krogoth/hrafn/releases).
+Get **hrafn** from our [release page](https://github.com/le-krogoth/hrafn/releases).
 
 If you prefer to build your own copy, clone this git repository to your local machine with:
 
@@ -31,7 +31,7 @@ If you prefer to build your own copy, clone this git repository to your local ma
 git clone https://github.com/le-krogoth/hrafn.git
 ```
 
-You will need a go compiler to compile hrafn.
+You will need a go compiler to compile **hrafn**.
 
 
 ## Configuration ##
@@ -50,13 +50,15 @@ domain,tls_scan,nmap_scan
 - tls_scan: 0 or 1 if the domain should be run through sslyze
 - nmap_scan: 0 or 1 if the domain should be run through nmap
 
+If you want to scan multiple hosts, just add one host / IP per line.
+
 
 ### Ciphers ###
 Configure ciphers.csv to your liking. This file contains all the ciphers which your policy allows. See report section for details.
 
 ## Run ##
 
-* Run the scan process like this. If no parameter is given, the scan takes the configuration from the config file.
+* Run the scan process like this.
 
 ```
 hrafn scan
@@ -98,7 +100,7 @@ The generated report is in CSV format (to be imported in some tool like, say, Sp
 * **tlsv1_0**: Amount of supported ciphers with this protocol version
 * **tlsv1_1**: Amount of supported ciphers with this protocol version
 * **tlsv1_2**: Amount of supported ciphers with this protocol version
-* **tlsv13**: Amount of supported ciphers with this protocol version
+* **tlsv1_3**: Amount of supported ciphers with this protocol version
 * **heartBleed**: Is this installation vulnerable to Heartbleed?
 * **ccs**: Is this installation vulnerable to the OpenSSL CCS Injection?
 * **sessionReneg**: Is this installation vulnerable to Session Renegotiation?
@@ -106,3 +108,4 @@ The generated report is in CSV format (to be imported in some tool like, say, Sp
 * **policy_violation_tlsv1_0**: This field contains all ciphers which are not in your ciphers.csv but were supported on this protocol on the server.
 * **policy_violation_tlsv1_1**: This field contains all ciphers which are not in your ciphers.csv but were supported on this protocol on the server.
 * **policy_violation_tlsv1_2**: This field contains all ciphers which are not in your ciphers.csv but were supported on this protocol on the server.
+* **policy_violation_tlsv1_3**: This field contains all ciphers which are not in your ciphers.csv but were supported on this protocol on the server.
