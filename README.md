@@ -1,81 +1,88 @@
 hrafn
 =====
 
-**hrafn** (c) 2014-16 by [Krogoth](https://twitter.com/le_krogoth) of [Ministry of Zombie Defense](http://www.mzd.org.uk/)
+**hrafn** (c) 2014-18 by [Krogoth](https://twitter.com/le_krogoth) of [Ministry of Zombie Defense](http://www.mzd.org.uk/)
 
 ## Introduction ##
 
-**hrafn** consists of a set of scripts to regularly scan and report on your own hosts for policy violations, mostly in SSL/TLS.
-At least TLS is what **hrafn** was written for, but you could add your own checks easily.
+**hrafn** scans your domains and reports policy violations as well as security problems with your SSL/TLS configuration.
+
+At least TLS scans are what **hrafn** was written for, you could easily add your own checks to that.
 
 And just in case you wonder, **hrafn** means raven in Old Norse (https://en.wikipedia.org/wiki/Hrafn).
 
 
 ## Prerequisites ##
 
-Right now, **hrafn** needs an installation of *sslyze* and of *nmap* for its scans. As well as an installation of nodejs to run the scripts.
+**hrafn** used to need an installation of nodejs to run. Nodejs is not needed anymore. **hrafn** comes in binary form nowadays and can be run directly on your scan host.
 
-* Get sslyze from here: https://github.com/nabla-c0d3/sslyze/releases
-* Get nodejs and nmap through the package manager of your distribution / OS.
+**hrafn** needs an installation of *sslyze* and of *nmap* for its scans. 
 
+* Get sslyze from here: https://github.com/nabla-c0d3/sslyze/releases or install it via pip (better) or through the package manager of your OS.
+* Get nmap through the package manager of your distribution / OS.
 
 ## Installation ##
 
-The installation is quite straightforward:
+Get hrafn from our [release page](https://github.com/le-krogoth/hrafn/releases).
 
-* Clone this git repository to your local machine with:
+If you prefer to build your own copy, clone this git repository to your local machine with:
 
 ```
 git clone https://github.com/le-krogoth/hrafn.git
 ```
 
-* Run the following command in the root directory to install all dependencies.
+You will need a go compiler to compile hrafn.
 
-```
-npm install
-```
 
 ## Configuration ##
 
-* Change the settings in the config.js file to your liking.
-* Add your domains to the domains.js file. Please make sure that you are allowed to scan these domains.
-* Configure ciphers.js to your liking. This file contains all the ciphers which your policy allows. See report section for details.
+### Settings ###
+Change the settings in the hrafn.config.js file to your liking. **hrafn** will generate a file for you if it does not detect one.
+
+### Domains ###
+There should be a domains.csv file. Add the IP addresses or domains to be scanned to this file. The format of the file is quite simple and consists of these elements:
+
+```
+domain,tls_scan,nmap_scan
+```
+
+- domain: The domain or IP to be scanned. Please make sure that you are allowed to scan these domains.
+- tls_scan: 0 or 1 if the domain should be run through sslyze
+- nmap_scan: 0 or 1 if the domain should be run through nmap
+
+
+### Ciphers ###
+Configure ciphers.csv to your liking. This file contains all the ciphers which your policy allows. See report section for details.
 
 ## Run ##
 
-* Run the scan process like this. If no parameter is given, the scan script takes the configuration from the config file.
+* Run the scan process like this. If no parameter is given, the scan takes the configuration from the config file.
 
 ```
-./scan.js
-
-// or when using command line configurations
-
-./scan.js --out foldertostoreresultsin --sslyze pathtosslyze --nmap pathtonmap
-
-// run scan.js with the help flag to learn more about the commandline
-
-./scan.js --help
+hrafn scan
 ```
+
 * Run the report job to generate a CSV file.
 
 ```
-./report.js
-
-// run again with the help flag for details regarding the commandline. Again, when no
-// parameter is given, the script takes the configuration from the config file.
+hrafn report
 ```
 
-If you want to run the scan as well as generate the report regularly, you could add these lines to your crontab file
-as root. *Just don't forget to change the hrafnuser and your path accordingly*.
+* If you want to run both jobs, use this:
 
 ```
-07 8    * * *   hrafnuser   cd /path/to/hrafn && scan.js
-53 8    * * *   hrafnuser   cd /path/to/hrafn && report.js
+hrafn full
 ```
 
-## Updates ##
 
-11.11.2016: Fixed the fingerprint query, supporting the new sslyze xml format. Adding certchain field to the report, filling with details about the certchain, see below.
+If you want to run the scan as well as generate the report regularly, you could add this line to your crontab file as root. 
+
+*Just don't forget to change the hrafnuser and your path accordingly*.
+
+```
+07 8    * * *   hrafnuser   cd /path/to/hrafn && hrafn full
+```
+
 
 ## Report ##
 
@@ -84,12 +91,18 @@ The generated report is in CSV format (to be imported in some tool like, say, Sp
 * **host**: Scanned host
 * **ip**: IP address of scanned host
 * **fingerprint**: Fingerprint of certificate found on host
-* **certchain**: Details about the certificate chain, including position, issuer, subject, serial number, validity and signature algorithm. Fields are separated by :, lines by ;
+* **serial**: Serial number of the leaf certificate
+* **notAfter**: Expiration date of the leaf certificate
 * **sslv2**: Amount of supported ciphers with this protocol version
 * **sslv3**: Amount of supported ciphers with this protocol version
 * **tlsv1_0**: Amount of supported ciphers with this protocol version
 * **tlsv1_1**: Amount of supported ciphers with this protocol version
 * **tlsv1_2**: Amount of supported ciphers with this protocol version
-* **policy_violation_tlsv1_0**: This field contains all ciphers which are not in your ciphers.js but were supported on this protocol on the server.
-* **policy_violation_tlsv1_1**: This field contains all ciphers which are not in your ciphers.js but were supported on this protocol on the server.
-* **policy_violation_tlsv1_2**: This field contains all ciphers which are not in your ciphers.js but were supported on this protocol on the server.
+* **tlsv13**: Amount of supported ciphers with this protocol version
+* **heartBleed**: Is this installation vulnerable to Heartbleed?
+* **ccs**: Is this installation vulnerable to the OpenSSL CCS Injection?
+* **sessionReneg**: Is this installation vulnerable to Session Renegotiation?
+* **robot**: Is this installation vulnerable to ROBOT attack?
+* **policy_violation_tlsv1_0**: This field contains all ciphers which are not in your ciphers.csv but were supported on this protocol on the server.
+* **policy_violation_tlsv1_1**: This field contains all ciphers which are not in your ciphers.csv but were supported on this protocol on the server.
+* **policy_violation_tlsv1_2**: This field contains all ciphers which are not in your ciphers.csv but were supported on this protocol on the server.
