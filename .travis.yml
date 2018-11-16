@@ -53,5 +53,4 @@ deploy:
     - bin/domains.csv
   skip_cleanup: true
   on:
-    tags: false # should be true in the end
-    repo: le-krogoth/hrafn
+    tags: false
