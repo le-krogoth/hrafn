@@ -1,0 +1,57 @@
+# travis configuration for hrafn
+# compiles, builds (and pushes binary to github)
+language: go
+sudo: false
+
+go:
+- "1.10"
+
+# get current version number for release
+env:
+  global:
+  - VERSION=$(cat VERSION)
+
+# email me the results of the test runs.
+notifications:
+  email: true
+
+before_install:
+# to find all the dependencies, run this:
+# go list -f "{{.ImportPath}} {{.Imports}}" ./...
+- cd
+- go get -u -v github.com/antchfx/xmlquery
+- go get -u -v github.com/antchfx/xpath
+- go get -u -v github.com/panjf2000/ants
+- go get -u -v github.com/sirupsen/logrus
+- go get -u -v github.com/spf13/viper
+
+# if install is empty, the script ends
+install:
+- go get -u -v github.com/pkg/errors
+
+script:
+- cd $HOME/gopath/src/github.com/le-krogoth/hrafn
+- mkdir build
+- GOPATH="$HOME/gopath/src/github.com/le-krogoth/hrafn:/home/travis/gopath"
+- go build -o build/hrafn-v$VERSION -gcflags "all=-N -l" mzd.org.uk/hrafn
+#  - make
+#  go test -v mzd.org.uk/hrafn
+
+# With this configuration the build itself runs for every commit and PR
+# (which is nice, because we see if everything compiles fine), but the
+# deployment only happens when we actually push a tag as well containing
+# the version number of the new release.
+#
+
+deploy:
+  provider: releases
+  api_key:
+    secure: WLEvQROxLu/tgEuO7gAOzcslq9JFlxL+Eg0Ww4lfkcB1Zi2stLVIn3l7SLC0fUOxEwYRamuTypCiYxKvL4hU+QwXJrSzTQiSeHisoyOXROprRvWgHe/ki6oqMsGIK5gCEN9/HI8YGsC42rwEzL8Ot0AVZntGAA+qj4dZJYNHzGXWkjbu+r3QtjREtigcaXqwjQqcqIncf2UUdOHmWlzlhCsaAGnjTo7wZPvpK6mcU/Yw93DfQ5TZ+Suc1imJuV8Bb9ne9vcG0EQkje581KhSb+4patbbDtfOXbwCMNn5NpNUReNHmqSi15gA2Lj2ezaSGqDbM40HGRm6AHkDGD5iL5JpJnE2587ffGAmZohai9rhuLUmCRX7U3y/+ZMxGaniUlltoqrsacaHNWEizCmRMAiyL9xRc7TUKJkfP+ipSXX7yvjXzGEp5Ldas285Ex4hy92R3piQ1illl7iaNxBWwqSgxzWL6//vqZuK8o5TWjxWbjN6+rRvgm70fktx/JX0cumhKvIBZQZgt9VuwqIXXLjjwAWpWTVFs1u3I28+KzkO1txoxzrJSfAc9w7FISRsW7NS7Lt0zBD3QiRzi76rO4wNSaOlToXTgHH6C0Bvn+1ti8NEv2FkKYDyN1raPAMH/BbuuKF+0zD921iUusXt6IYbfQX2dWwAururuCimNq0=
+  file:
+    - build/hrafn-v$VERSION
+    - bin/ciphers.csv
+    - bin/domains.csv
+  skip_cleanup: true
+  on:
+    tags: false # should be true in the end
+    repo: le-krogoth/hrafn

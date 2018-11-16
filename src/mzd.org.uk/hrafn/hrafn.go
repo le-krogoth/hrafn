@@ -27,28 +27,43 @@ package main
 -----------------------------------------------------------------------------*/
 import (
 	"github.com/panjf2000/ants"
+	"github.com/sirupsen/logrus"
 	"mzd.org.uk/hrafn/common"
 	"mzd.org.uk/hrafn/data"
+	"os"
 	"sync"
 )
 
 func main() {
 
-	//
-	common.InitConfig()
+	if len(os.Args) != 2 {
 
-	start()
+		common.LogFatal("No command given", nil)
+	}
 
-	GenerateReport()
+	switch os.Args[1] {
+	case "scan":
+		common.InitConfig()
+		scan()
+
+	case "report":
+		common.InitConfig()
+		GenerateReport()
+
+	default:
+		common.LogFatal("No known command given. Use either 'scan' or 'report'.", nil)
+	}
 }
 
-func start() {
+func scan() {
 
 	defer ants.Release()
 
 	var wg sync.WaitGroup
 
-	p, _ := ants.NewPoolWithFunc(100, func(rec interface{}) error {
+	poolSize := common.GetIntFromConfig("tools.job_limit")
+
+	p, _ := ants.NewPoolWithFunc(poolSize, func(rec interface{}) error {
 		Scan(rec)
 		wg.Done()
 		return nil
@@ -65,11 +80,14 @@ func start() {
 		record, err := data.GetDomainRecord(i)
 		if err != nil {
 
-		}
+			common.LogError("Error when trying to access Domain record.", logrus.Fields{"error": err, "id": i})
 
-		wg.Add(1)
-		p.Serve(record)
+		} else {
+
+			wg.Add(1)
+			p.Serve(record)
+		}
 	}
+
 	wg.Wait()
-	// fmt.Printf("running goroutines: %d\n", p.Running())
 }

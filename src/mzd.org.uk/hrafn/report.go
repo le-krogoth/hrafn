@@ -95,6 +95,14 @@ func GenerateReport() {
 			common.LogError("Can't parse result file.", logrus.Fields{"file": sFile, "error": err})
 		}
 
+		// check if scan worked, if not, write error and jump to next file
+		invalidTarget := xmlquery.FindOne(doc, "//document/invalidTargets/invalidTarget")
+		if invalidTarget != nil {
+
+			common.LogError("Result file contains an error.", logrus.Fields{"file": sFile})
+			continue
+		}
+
 		host := xmlquery.FindOne(doc, "//document/results/target/@host").InnerText()
 		ip := xmlquery.FindOne(doc, "//document/results/target/@ip").InnerText()
 
@@ -117,28 +125,10 @@ func GenerateReport() {
 		sessionReneg := xmlquery.FindOne(doc, "//document/results/target/reneg/sessionRenegotiation/@isSecure").InnerText()
 		robot := xmlquery.FindOne(doc, "//document/results/target/robot/robotAttack/@resultEnum").InnerText()
 
-		// TODO decide if needed
-		/*
-			sCC := ""
-			certChain := xmlquery.Find(doc, "//document/results/target/certinfo/receivedCertificateChain/certificate")
-			for i, cert := range certChain {
-
-				sCC += xmlquery.FindOne(cert, "issuer").InnerText() + ":"
-				sCC += xmlquery.FindOne(cert, "subject").InnerText() + ":"
-				sCC += xmlquery.FindOne(cert, "serialNumber").InnerText() + ":"
-				sCC += xmlquery.FindOne(cert, "notAfter").InnerText() + ":"
-				sCC += xmlquery.FindOne(cert, "signatureAlgorithm").InnerText() + ":"
-
-				if i < (len(certChain) - 1) {
-					sCC += "\n"
-				}
-			}
-
-			sCC = "\"" + sCC + "\""
-		*/
-
 		sLine := fmt.Sprintf("%v,%v,%v,\"%v\",\"%v\",%v,%v,%v,%v,%v,%v,%v,%v,%v,%v\n", host, ip, fingerprint, serial, notAfter, sslv2, sslv3, tlsv10, tlsv11, tlsv12, tlsv13, heartBleed, ccs, sessionReneg, robot)
 
 		fCsv.WriteString(sLine)
 	}
+
+	common.LogInfo("Result file written.", logrus.Fields{"file": fCsv.Name()})
 }

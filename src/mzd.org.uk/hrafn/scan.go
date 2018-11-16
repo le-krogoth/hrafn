@@ -28,7 +28,7 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"io"
 	"mzd.org.uk/hrafn/common"
@@ -42,26 +42,28 @@ func Scan(rec interface{}) error {
 
 	record := rec.(data.Record)
 
-	fmt.Println("scanning domain: " + record.Domain)
+	common.LogInfo("Scanning domain.", logrus.Fields{"domain": record.Domain})
 
 	if record.ScanTLS {
 
-		fmt.Println("scanning tls: " + record.Domain)
+		common.LogDebug("Scanning TLS.", logrus.Fields{"domain": record.Domain})
 
 		err := scanTLS(record.Domain)
 		if err != nil {
 
+			common.LogError("Scanning TLS returned an error.", logrus.Fields{"domain": record.Domain, "error": err})
 			return err
 		}
 	}
 
 	if record.ScanPorts {
 
-		fmt.Println("scanning ports: " + record.Domain)
+		common.LogDebug("Scanning ports.", logrus.Fields{"domain": record.Domain})
 
 		err := scanPorts(record.Domain)
 		if err != nil {
 
+			common.LogError("Scanning ports returned an error.", logrus.Fields{"domain": record.Domain, "error": err})
 			return err
 		}
 	}
@@ -88,8 +90,9 @@ func scanTLS(domain string) error {
 
 	ex, err := os.Executable()
 	if err != nil {
-		common.LogError("Cant seem to find myself?", logrus.Fields{"error": err})
 
+		common.LogError("Cant seem to find myself?", logrus.Fields{"error": err})
+		return exec.ErrNotFound
 	}
 
 	cmd := exec.Command(sslyze, "-m", "sslyze", opt, sni, out, domain)
@@ -97,34 +100,37 @@ func scanTLS(domain string) error {
 	exPath := filepath.Dir(ex)
 	cmd.Dir = exPath
 
-	// todo, redirect output only, if in dev mode
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		panic(err)
-	}
-	err = cmd.Start()
-	if err != nil {
-		panic(err)
+	devMode := common.GetLogLevel() == "debug"
+
+	var stdout io.ReadCloser
+	var stderr io.ReadCloser
+
+	if devMode {
+		// todo, redirect output only, if in dev mode
+		stdout, err = cmd.StdoutPipe()
+		if err != nil {
+			common.LogError("Stdout Pipe returned an error", logrus.Fields{"error": err})
+		}
+		stderr, err = cmd.StderrPipe()
+		if err != nil {
+			common.LogError("Sterr Pipe returned an error", logrus.Fields{"error": err})
+		}
 	}
 
-	go copyOutput(stdout)
-	go copyOutput(stderr)
+	err = cmd.Start()
+
+	if err != nil {
+
+		common.LogError("Command start returned an error", logrus.Fields{"error": err})
+		return errors.New("Command start failed")
+	}
+
+	if devMode {
+		go copyOutput(stdout)
+		go copyOutput(stderr)
+	}
 
 	cmd.Wait()
-	/*
-		bytes, err := cmd.Output()
-		if err != nil {
-			common.LogError("Error when running sslyze.", logrus.Fields{"error": err})
-
-			return err
-		}
-
-		fmt.Println(bytes)
-	*/
 
 	return nil
 }
@@ -158,34 +164,36 @@ func scanPorts(domain string) error {
 	exPath := filepath.Dir(ex)
 	cmd.Dir = exPath
 
-	/*
-		bytes, err := cmd.Output()
+	devMode := common.GetLogLevel() == "debug"
+
+	var stdout io.ReadCloser
+	var stderr io.ReadCloser
+
+	if devMode {
+
+		stdout, err = cmd.StdoutPipe()
 		if err != nil {
-			common.LogError("Error when running nmap.", logrus.Fields{"error": err})
-
-			return err
+			common.LogError("Stdout Pipe returned an error", logrus.Fields{"error": err})
 		}
-	*/
+		stderr, err = cmd.StderrPipe()
+		if err != nil {
+			common.LogError("Sterr Pipe returned an error", logrus.Fields{"error": err})
+		}
+	}
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		panic(err)
-	}
 	err = cmd.Start()
 	if err != nil {
-		panic(err)
+
+		common.LogError("Command start returned an error", logrus.Fields{"error": err})
+		return errors.New("Command start failed")
 	}
 
-	go copyOutput(stdout)
-	go copyOutput(stderr)
+	if devMode {
+		go copyOutput(stdout)
+		go copyOutput(stderr)
+	}
 
 	cmd.Wait()
-
-	//fmt.Println(bytes)
 
 	return nil
 }
@@ -194,6 +202,7 @@ func copyOutput(r io.Reader) {
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+
+		common.LogDebug(scanner.Text(), nil)
 	}
 }
